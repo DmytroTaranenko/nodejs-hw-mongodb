@@ -6,14 +6,24 @@ import {
   getContactById,
   updateContact,
 } from '../services/contacts.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 
 export async function getContactsController(req, res) {
-  const contacts = await getAllContacts();
+  const { page, perPage } = parsePaginationParams(req.query);
+  const { sortBy, sortOrder } = parseSortParams(req.query);
+
+  const data = await getAllContacts({
+    page,
+    perPage,
+    sortBy,
+    sortOrder,
+  });
 
   res.json({
     status: 200,
     message: 'Successfully found contacts!',
-    data: contacts,
+    data
   });
 }
 
@@ -23,7 +33,7 @@ export async function getContactController(req, res, next) {
   const contact = await getContactById(id);
 
   if (!contact) {
-    return next(new createHttpError.NotFound('Student not found:('));
+    return next(new createHttpError.NotFound('Contact not found:('));
   }
 
   res.json({
@@ -42,7 +52,7 @@ export async function createContactController(req, res, next) {
     isFavourite: req.body.isFavourite,
     contactType: req.body.contactType,
   };
-  
+
   if(!req.body.email && !req.body.phoneNumber && !req.body.contactType){
     throw createHttpError(400, "Please check required field they cant to be empty")
   }

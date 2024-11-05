@@ -18,6 +18,7 @@ export async function getContactsController(req, res) {
     perPage,
     sortBy,
     sortOrder,
+    userId: req.user.id,
   });
 
   res.json({
@@ -33,7 +34,12 @@ export async function getContactController(req, res, next) {
   const contact = await getContactById(id);
 
   if (!contact) {
-    return next(new createHttpError.NotFound('Contact not found:('));
+    return next(new createHttpError.NotFound('Contact not found'));
+  }
+
+  if(contact.userId.toString() !== req.user.id.toString() ){
+    return next(new createHttpError.Forbidden('Contact not forbidden'));
+    
   }
 
   res.json({
@@ -51,6 +57,7 @@ export async function createContactController(req, res, next) {
     email: req.body.email,
     isFavourite: req.body.isFavourite,
     contactType: req.body.contactType,
+    userId: req.user.id
   };
 
   if(!req.body.email && !req.body.phoneNumber && !req.body.contactType){
@@ -84,6 +91,11 @@ export async function updateContactController(req, res, next) {
     throw createHttpError(404, 'Contact not found');
   }
 
+  if(contact.userId.toString() !== req.user.id.toString() ){
+    return next(new createHttpError.Forbidden('Contact not forbidden'));
+    
+  }
+
   res.json({
     status: 200,
     message: 'Successfully patched a contact!',
@@ -93,6 +105,15 @@ export async function updateContactController(req, res, next) {
 
 export async function deleteContactController(req, res, next) {
   const { id } = req.params;
+
+  const contact = await getContactById(id);
+    if (!contact) {
+      return next(new createHttpError.NotFound('Contact not found'));
+    }
+
+    if (contact.userId.toString() !== req.user.id.toString()) {
+      return next(new createHttpError.Forbidden('Access denied to contact'));
+    }
 
   const result = await deleteContact(id);
 

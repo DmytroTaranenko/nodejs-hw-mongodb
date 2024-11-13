@@ -1,10 +1,21 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import crypto from 'node:crypto';
 
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import handlebars from 'handlebars';
 import createHttpError from 'http-errors';
 
 import { User } from '../models/User.js';
 import { Session } from '../models/session.js';
+
+import { sendMail } from '../utils/sendMail.js';
+
+const RESET_PASSWORD_TEMPLATE = fs.readFileSync(
+  path.resolve('src/templates/reset-password.hbs'),
+  { encoding: 'utf-8' },
+);
 
 export async function registerUser(payload) {
   const user = await User.findOne({ email: payload.email });
@@ -74,3 +85,64 @@ export async function refreshSession(sessionId, refreshToken) {
 export async function logoutUser(sessionId) {
   return Session.deleteOne({ _id: sessionId });
 }
+
+export async function requestResetPassword(email) {
+  const user = await User.findOne({ email });
+
+  if (user === null) {
+    throw createHttpError(404, 'User not found ');
+  }
+
+  const resetToken = jwt.sign(
+    { sub: user._id, email: user.email },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '5m',
+    },
+  );
+  const html = handlebars.compile(RESET_PASSWORD_TEMPLATE);
+  try {
+    await sendMail({
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: 'Reset your password ',
+      html: html({ resetToken }),
+    });
+  } catch (error) {
+    console.log(error);
+
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+}
+
+export async function resetPassword(password, token) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findOne({ _id: decoded.sub, email: decoded.email });
+
+    if (user === null) {
+      throw createHttpError(404, 'User not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 11);
+    await User.findByIdAndUpdate(user.id, { password: hashedPassword });
+    await Session.deleteMany({ userId: user.id });
+  } catch (error) {
+    if (
+      error.name === 'JsonWebTokenError' ||
+      error.name === 'TokenExpiredError'
+    ) {
+      throw createHttpError(401, 'Token is expired or invalid.');
+    }
+    throw error;
+  }
+}
+
+//{
+  //"password": "new_password_123",
+  //"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzI5ZTM5MzkzZTQxOGYyZWMyZjk0MmEiLCJlbWFpbCI6ImRteXRyb3RhcmFuZW5rbzk4QGdtYWlsLmNvbSIsImlhdCI6MTczMTQ5NzQzMiwiZXhwIjoxNzMxNDk3NzMyfQ.Y9JnEChP4ev2vgnpU6i7ARiascg6jSx61JwkOS4zqkk"
+  //}

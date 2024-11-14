@@ -10,7 +10,7 @@ import {
 import {upload} from "../middlewares/upload.js"
 
 import { ctrlWrapper } from '../utils/ctrlWrapper.js';
-import { contactSchema } from '../validation/contact.js';
+import { contactSchema, updateContactSchema } from '../validation/contact.js';
 import { isValidID } from '../middlewares/isValidId.js';
 import { validateBody } from '../middlewares/validateBody.js';
 
@@ -36,7 +36,7 @@ contactRoutes.patch(
   isValidID,
   upload.single("photo"),
   jsonParser,
-  validateBody(contactSchema),
+  validateBody(updateContactSchema),
   ctrlWrapper(updateContactController),
 );
 

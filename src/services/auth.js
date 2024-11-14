@@ -141,8 +141,3 @@ export async function resetPassword(password, token) {
     throw error;
   }
 }
-
-//{
-  //"password": "new_password_123",
-  //"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NzI5ZTM5MzkzZTQxOGYyZWMyZjk0MmEiLCJlbWFpbCI6ImRteXRyb3RhcmFuZW5rbzk4QGdtYWlsLmNvbSIsImlhdCI6MTczMTQ5NzQzMiwiZXhwIjoxNzMxNDk3NzMyfQ.Y9JnEChP4ev2vgnpU6i7ARiascg6jSx61JwkOS4zqkk"
-  //}

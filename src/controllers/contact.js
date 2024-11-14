@@ -111,8 +111,6 @@ export async function updateContactController(req, res, next) {
       const result = await uploadToCloudinary(req.file.path);
       await fs.unlink(req.file.path);
 
-      console.log(result);
-
       photo = result.secure_url;
     } else {
       await fs.rename(

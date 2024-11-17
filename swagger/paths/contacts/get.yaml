@@ -29,8 +29,8 @@ parameters:
     name: sortBy
     schema:
       type: string
-    example: 'age'
-    description: 'Sort by age'
+    example: 'name'
+    description: 'Sort by name'
   - in: query
     name: contactType
     schema:

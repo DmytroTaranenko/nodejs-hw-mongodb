@@ -1,3 +1,6 @@
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
+import express from 'express';
+
 import 'dotenv/config';
 import { initMongoConnection } from './db/initMongoConnection.js';
 import app from './app.js';
@@ -17,3 +20,8 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+
+app.use(express.static("photos"));
+
+app.use('/api-docs', swaggerDocs());

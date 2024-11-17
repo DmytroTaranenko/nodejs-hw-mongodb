@@ -68,7 +68,7 @@ export async function createContactController(req, res, next) {
     } else {
       await fs.rename(
         req.file.path,
-        path.resolve('src', 'public/photos', req.file.filename),
+        path.resolve('public/photos', req.file.filename),
       );
       photo = `http://localhost:8080/photos/${req.file.filename}`;
     }
@@ -117,7 +117,7 @@ export async function updateContactController(req, res, next) {
     } else {
       await fs.rename(
         req.file.path,
-        path.resolve('src', 'public/photos', req.file.filename),
+        path.resolve('public/photos', req.file.filename),
       );
       photo = `http://localhost:8080/photos/${req.file.filename}`;
     }

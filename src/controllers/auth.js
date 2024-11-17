@@ -1,6 +1,6 @@
 import { request } from 'express';
 
-import { generateOAuthUrl } from '../utils/googleOAuth2.js';
+import { generateOAuthUrl, validateCode } from '../utils/googleOAuth2.js';
 
 import {
   registerUser,
@@ -9,7 +9,9 @@ import {
   refreshSession,
   requestResetPassword,
   resetPassword,
+  loginOrRegisterUser,
 } from '../services/auth.js';
+import createHttpError from 'http-errors';
 
 export async function registerController(req, res) {
   const payload = {
@@ -117,5 +119,27 @@ export async function getOAuthUrlController(req, res) {
 }
 
 export async function confirmOAuthController(req, res) {
-  res.send("confirmed");
+  const { code } = req.body;
+  const ticket = await validateCode(code);
+
+  const session = await loginOrRegisterUser({
+    email: ticket.payload.email,
+    name: ticket.payload.name,
+  });
+
+  res.cookie('refreshToken', session.refreshToken, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+
+  res.cookie('sessionId', session._id, {
+    httpOnly: true,
+    expires: session.refreshTokenValidUntil,
+  });
+
+  res.send({
+    status: 200,
+    message: 'Login with Google successfully',
+    data: { accessToken: session.accessToken },
+  });
 }
